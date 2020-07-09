@@ -62,7 +62,7 @@ async function main() {
   const metadata = JSON.parse(xmlJs.xml2json(metadataXml, {compact: true, spaces: 2}))
   
   
-  const docMetadata = {}
+  const docMetadata = {pagesInfo}
 
   if (metadata.results.notice.record.metadata['oai_dc:dc']['dc:title']._text) {
     docMetadata.title = metadata.results.notice.record.metadata['oai_dc:dc']['dc:title']._text
@@ -85,11 +85,7 @@ async function main() {
     docMetadata.author = metadata.results.notice.record.metadata['oai_dc:dc']['dc:creator'].map((c) => c._text)
   }
 
-  // writing meta on disk as a json file
-  let metaFilepathEl = outputPath.split('.')
-  metaFilepathEl[metaFilepathEl.length - 1] = 'json'
-  let metaFilepath = metaFilepathEl.join('.')
-  fs.writeFileSync(metaFilepath, JSON.stringify(docMetadata, null, 2))
+  
 
   let downloadsDone = 0
 
@@ -101,9 +97,11 @@ async function main() {
     
     try {
       const res = await fetch(url)
-      const sizeMB = Math.round((parseInt(res.headers.get('content-length')) / 2**20) * 100) / 100
+      const byteLength = parseInt(res.headers.get('content-length'))      
+      const sizeMB = Math.round((byteLength / 2**20) * 100) / 100
+      pagesInfo[i].byteLength = byteLength
 
-      console.log(`Fetching file ${i+1}/${pagesInfo.length} ... (${sizeMB}MB)`)
+      console.log(`Fetching file ${i+1}/${pagesInfo.length} ... (${sizeMB}MB, ${pagesInfo[i].width}x${pagesInfo[i].height}px )`)
       console.log('as', iThFile)
 
       // pipe version
@@ -117,6 +115,12 @@ async function main() {
       console.log('❌ ', err.message)
     }
   }
+
+  // writing meta on disk as a json file
+  let metaFilepathEl = outputPath.split('.')
+  metaFilepathEl[metaFilepathEl.length - 1] = 'json'
+  let metaFilepath = metaFilepathEl.join('.')
+  fs.writeFileSync(metaFilepath, JSON.stringify(docMetadata, null, 2))
   
 }
 
