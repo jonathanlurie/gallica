@@ -28,6 +28,7 @@ async function fetchDocument(ark, outputPath) {
   const metadataRes = await fetch(`https://gallica.bnf.fr/services/OAIRecord?ark=${ark}`)
   const metadataXml = await metadataRes.text()
   const metadata = JSON.parse(xmlJs.xml2json(metadataXml, {compact: true, spaces: 2}))
+  // console.log(metadata.results.notice.record.metadata)
   
   
   const docMetadata = {pagesInfo}
@@ -40,8 +41,10 @@ async function fetchDocument(ark, outputPath) {
     docMetadata.date = metadata.results.notice.record.metadata['oai_dc:dc']['dc:date']._text
   }
 
-  if (metadata.results.notice.record.metadata['oai_dc:dc']['dc:description']._text) {
+  if (metadata.results.notice.record.metadata['oai_dc:dc']['dc:description'] && metadata.results.notice.record.metadata['oai_dc:dc']['dc:description']._text) {
     docMetadata.description = metadata.results.notice.record.metadata['oai_dc:dc']['dc:description']._text
+  } else {
+    docMetadata.description = 'none'
   }
   
   if (metadata.results.notice.record.metadata['oai_dc:dc']['dc:creator']) {
